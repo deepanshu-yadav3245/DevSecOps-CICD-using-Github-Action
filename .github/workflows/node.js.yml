@@ -9,7 +9,7 @@ on:
 
 jobs:
   compile:
-    runs-on: ip-172-31-73-46t   # Agent-1 ki jagah yeh use karo (recommended)
+    runs-on: ubuntu-latest # Agent-1 ki jagah yeh use karo (recommended)
 
     steps:
       - name: Checkout code
