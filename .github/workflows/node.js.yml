@@ -99,7 +99,7 @@ jobs:
             -Dsonar.sources=.
             -Dsonar.exclusions=**/node_modules/**,**/__pycache__/**,**/build/**
         env:
-          SONAR_TOKEN: ${{ vars.SONAR_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
     
   build_frontend_docker_image_and_push:
