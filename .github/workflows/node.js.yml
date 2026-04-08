@@ -1,192 +1,338 @@
-name: Node.js CI
+# name: Node.js CI
+
+# on:
+#   push:
+#     branches: [ "main" ]
+#   pull_request:
+#     branches: [ "main" ]
+
+# jobs:
+#   compile:
+#     runs-on: ubuntu-latest # Agent-1 ki jagah yeh use karo (recommended)
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       - name: Set up Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: '23'
+
+#       - name: Frontend Compilation (Syntax Check)
+#         run: |
+#           cd client
+#           find . -name "*.js" -exec node --check {} +
+
+#       - name: Backend Compilation (Syntax Check)
+#         run: |
+#           cd api
+#           find . -name "*.js" -exec node --check {} +
+
+#   gitleaks-scan:
+#     runs-on: ubuntu-latest   # Agent-1 hata diya (GitHub runner use karo)
+#     needs: compile
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       - name: Gitleaks Scan
+#         uses: gitleaks/gitleaks-action@v2
+#         with:
+#           args: detect --source . --exit-code 1
+
+#   trivy_fs_scan:
+#     runs-on: ubuntu-latest
+#     needs: gitleaks-scan
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       - name: Run Trivy vulnerability scanner
+#         uses: aquasecurity/trivy-action@master
+#         with:
+#           scan-type: fs
+#           scan-ref: .
+#           format: table
+#           ignore-unfixed: true
+#           vuln-type: os,library
+#           severity: CRITICAL,HIGH
+
+#   sonar-frontend:
+#     runs-on: ubuntu-latest
+#     needs: trivy_fs_scan
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       - name: SonarQube Scan (Frontend)
+#         uses: sonarsource/sonarqube-scan-action@v2
+#         with:
+#           projectBaseDir: client
+#           args: >
+#             -Dsonar.projectKey=myorg_client
+#             -Dsonar.projectName=myorg_client
+#             -Dsonar.sources=.
+#             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**
+#         env:
+#           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+#   sonar-backend:
+#     runs-on: ubuntu-latest
+#     needs: sonar-frontend
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       - name: SonarQube Scan (Backend)
+#         uses: sonarsource/sonarqube-scan-action@v2
+#         with:
+#           projectBaseDir: api
+#           args: >
+#             -Dsonar.projectKey=myorg_backend
+#             -Dsonar.projectName=myorg_backend
+#             -Dsonar.sources=.
+#             -Dsonar.exclusions=**/node_modules/**,**/__pycache__/**,**/build/**
+#         env:
+#           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+#   build_frontend_docker_image_and_push: 
+#     runs-on: ubuntu-latest
+#     needs: build_backend_docker_image_and_push
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       - name: Login to Docker Hub
+#         uses: docker/login-action@v3
+#         with:
+#           username: ${{ vars.DOCKERHUB_USERNAME }}
+#           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+#       - name: Set up QEMU
+#         uses: docker/setup-qemu-action@v3
+
+#       - name: Set up Docker Buildx
+#         uses: docker/setup-buildx-action@v3
+
+#       - name: Build and Push Docker image (Frontend)
+#         uses: docker/build-push-action@v6
+#         with:
+#           context: ./client
+#           push: true
+#           tags: deepanshuyadav23/frontend:latest
+#           file: ./client/Dockerfile
+
+
+#   build_backend_docker_image_and_push:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       - name: Login to Docker Hub
+#         uses: docker/login-action@v3
+#         with:
+#           username: ${{ vars.DOCKERHUB_USERNAME }}
+#           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+#       - name: Set up QEMU
+#         uses: docker/setup-qemu-action@v3
+
+#       - name: Set up Docker Buildx
+#         uses: docker/setup-buildx-action@v3
+
+#       - name: Build and Push Docker image (Backend)
+#         uses: docker/build-push-action@v6
+#         with:
+#           context: ./api
+#           push: true
+#           tags: deepanshuyadav23/backend:latest
+#           file: ./api/Dockerfile
+
+#   trivy_image_scan:
+#     runs-on: ubuntu-latest
+#     needs:
+#       - build_frontend_docker_image_and_push
+#       - build_backend_docker_image_and_push
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       - name: Run Trivy image scan for backend
+#         uses: aquasecurity/trivy-action@master
+#         with:
+#           scan-type: image
+#           image-ref: deepanshuyadav23/backend:latest
+#           format: table
+#           exit-code: '0'
+#           ignore-unfixed: true
+#           vuln-type: os,library
+#           severity: CRITICAL,HIGH
+
+#       # Frontend image scan
+#       - name: Run Trivy image scan for frontend
+#         uses: aquasecurity/trivy-action@master
+#         with:
+#           scan-type: image
+#           image-ref: deepanshuyadav23/frontend:latest
+#           format: table
+#           exit-code: '0'
+#           ignore-unfixed: true
+#           vuln-type: os,library
+#           severity: CRITICAL,HIGH
+
+
+name: DevSecOps CI/CD Pipeline
 
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
 
 jobs:
+
   compile:
-    runs-on: ubuntu-latest # Agent-1 ki jagah yeh use karo (recommended)
-
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '23'
 
-      - name: Frontend Compilation (Syntax Check)
+      - name: Frontend Syntax Check
         run: |
           cd client
           find . -name "*.js" -exec node --check {} +
 
-      - name: Backend Compilation (Syntax Check)
+      - name: Backend Syntax Check
         run: |
           cd api
           find . -name "*.js" -exec node --check {} +
 
-  gitleaks-scan:
-    runs-on: ubuntu-latest   # Agent-1 hata diya (GitHub runner use karo)
+  gitleaks:
+    runs-on: ubuntu-latest
     needs: compile
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Gitleaks Scan
-        uses: gitleaks/gitleaks-action@v2
+      - uses: actions/checkout@v4
+      - uses: gitleaks/gitleaks-action@v2
         with:
           args: detect --source . --exit-code 1
 
-  trivy_fs_scan:
+  trivy_fs:
     runs-on: ubuntu-latest
-    needs: gitleaks-scan
-
+    needs: gitleaks
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+      - uses: actions/checkout@v4
+      - uses: aquasecurity/trivy-action@master
         with:
           scan-type: fs
           scan-ref: .
-          format: table
-          ignore-unfixed: true
-          vuln-type: os,library
           severity: CRITICAL,HIGH
 
-  sonar-frontend:
+  sonar_frontend:
     runs-on: ubuntu-latest
-    needs: trivy_fs_scan
-
+    needs: trivy_fs
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: SonarQube Scan (Frontend)
-        uses: sonarsource/sonarqube-scan-action@v2
+      - uses: actions/checkout@v4
+      - uses: sonarsource/sonarqube-scan-action@v2
         with:
           projectBaseDir: client
           args: >
             -Dsonar.projectKey=myorg_client
-            -Dsonar.projectName=myorg_client
-            -Dsonar.sources=.
-            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
-  sonar-backend:
+  sonar_backend:
     runs-on: ubuntu-latest
-    needs: sonar-frontend
-
+    needs: sonar_frontend
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: SonarQube Scan (Backend)
-        uses: sonarsource/sonarqube-scan-action@v2
+      - uses: actions/checkout@v4
+      - uses: sonarsource/sonarqube-scan-action@v2
         with:
           projectBaseDir: api
           args: >
             -Dsonar.projectKey=myorg_backend
-            -Dsonar.projectName=myorg_backend
-            -Dsonar.sources=.
-            -Dsonar.exclusions=**/node_modules/**,**/__pycache__/**,**/build/**
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
-  build_frontend_docker_image_and_push: 
+  # 🔥 BACKEND BUILD FIRST
+  build_backend:
     runs-on: ubuntu-latest
-    needs: build_backend_docker_image_and_push
+    needs: sonar_backend
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
+      - uses: docker/login-action@v3
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and Push Docker image (Frontend)
-        uses: docker/build-push-action@v6
-        with:
-          context: ./client
-          push: true
-          tags: deepanshuyadav23/frontend:latest
-          file: ./client/Dockerfile
-
-
-  build_backend_docker_image_and_push:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ vars.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and Push Docker image (Backend)
+      - name: Build & Push Backend
         uses: docker/build-push-action@v6
         with:
           context: ./api
           push: true
           tags: deepanshuyadav23/backend:latest
-          file: ./api/Dockerfile
 
+  # 🔥 FRONTEND BUILD SECOND
+  build_frontend:
+    runs-on: ubuntu-latest
+    needs: build_backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build & Push Frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./client
+          push: true
+          tags: deepanshuyadav23/frontend:latest
+
+  # 🔥 TRIVY IMAGE SCAN (AFTER BOTH BUILDS)
   trivy_image_scan:
     runs-on: ubuntu-latest
     needs:
-      - build_frontend_docker_image_and_push
-      - build_backend_docker_image_and_push
+      - build_backend
+      - build_frontend
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Run Trivy image scan for backend
+      - name: Scan Backend Image
         uses: aquasecurity/trivy-action@master
         with:
-          scan-type: image
           image-ref: deepanshuyadav23/backend:latest
           format: table
-          exit-code: '0'
-          ignore-unfixed: true
-          vuln-type: os,library
+          exit-code: '1'
           severity: CRITICAL,HIGH
 
-      # Frontend image scan
-      - name: Run Trivy image scan for frontend
+      - name: Scan Frontend Image
         uses: aquasecurity/trivy-action@master
         with:
-          scan-type: image
           image-ref: deepanshuyadav23/frontend:latest
           format: table
-          exit-code: '0'
-          ignore-unfixed: true
-          vuln-type: os,library
+          exit-code: '1'
           severity: CRITICAL,HIGH
