@@ -217,6 +217,7 @@ jobs:
       # 🚀 Deploy to EKS
       - name: Deploy to EKS
         run: |
+          kubectl create namespace prod || true
           kubectl apply -f k8s-prod/sc.yaml
           kubectl apply -f k8s-prod/mysql.yaml
           kubectl apply -f k8s-prod/backend.yaml
