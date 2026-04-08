@@ -133,7 +133,6 @@ jobs:
 
   build_backend_docker_image_and_push:
     runs-on: ubuntu-latest
-    needs: sonar-backend
 
     steps:
       - name: Checkout code
@@ -173,7 +172,7 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: image
-          image-ref: deepanshu-yadav3245/backend:latest
+          image-ref: deepanshuyadav23/backend:latest
           format: table
           exit-code: '0'
           ignore-unfixed: true
@@ -185,7 +184,7 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: image
-          image-ref: deepanshu-yadav3245/frontend:latest
+          image-ref: deepanshuyadav23/frontend:latest
           format: table
           exit-code: '0'
           ignore-unfixed: true
